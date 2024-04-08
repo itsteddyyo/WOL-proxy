@@ -16,7 +16,7 @@ WOL_BROADCAST_ADDR = os.getenv('WOL_BROADCAST_ADDR',"255.255.255.255")
 #print("All env vars read.")
 
 # The callback for when the client receives a CONNACK response from the server.
-def on_connect(client, userdata, flags, rc):
+def on_connect(client, userdata, flags, rc, properties):
     print(f"Connected to broker at {MQTT_BROKER_HOST}:{MQTT_BROKER_PORT} with result code {rc}: "+mqtt.connack_string(rc))
 
     client.publish(MQTT_TOPIC_PREFIX+"/status",payload="Online",qos=1,retain=True)
@@ -24,11 +24,11 @@ def on_connect(client, userdata, flags, rc):
     # subscribe to command topic
     client.subscribe(MQTT_TOPIC_PREFIX+"/command", MQTT_QOS)
 
-def on_subscribe(client, userdata, mid, granted_qos):
+def on_subscribe(client, userdata, mid, granted_qos, properties):
     print(f"Subscribed to commands on topic \"{MQTT_TOPIC_PREFIX}/command\" with QOS {granted_qos[0]}.")
     print(f"Wake-On-LAN proxy service started.")  
 
-def on_disconnect(client, userdata, rc):
+def on_disconnect(client, userdata, rc, properties):
     if rc != 0:
         print(f"Unexpected disconnection from broker (RC={rc}). Attempting to reconnect...")
 
