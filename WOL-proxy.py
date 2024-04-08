@@ -43,7 +43,7 @@ def on_message(client, userdata, message):
         print(f"Message payload has invalid mac address format!")
 
 # set up mqtt client
-client = mqtt.Client(client_id=MQTT_CLIENT_ID)
+client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=MQTT_CLIENT_ID)
 if MQTT_USERNAME and MQTT_PASSWORD:
     client.username_pw_set(MQTT_USERNAME,MQTT_PASSWORD)
     print("Username and password set.")
