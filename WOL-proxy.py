@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import os
 import re
+import ssl
 import paho.mqtt.client as mqtt
 from wakeonlan import send_magic_packet
 
@@ -47,7 +48,11 @@ client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2, clie
 if MQTT_USERNAME and MQTT_PASSWORD:
     client.username_pw_set(MQTT_USERNAME,MQTT_PASSWORD)
     print("Username and password set.")
-client.will_set(MQTT_TOPIC_PREFIX+"/status", payload="Offline", qos=1, retain=True)    
+client.tls_set(certfile=None,
+               keyfile=None,
+               cert_reqs=ssl.CERT_REQUIRED)
+client.tls_insecure_set(False)
+client.will_set(MQTT_TOPIC_PREFIX+"/status", payload="Offline", qos=1, retain=True)
 client.on_connect = on_connect # on connect callback
 client.on_message = on_message # on message callback
 client.on_disconnect = on_disconnect # on disconnect callback
