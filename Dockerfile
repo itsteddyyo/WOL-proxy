@@ -1,4 +1,4 @@
-FROM lsiobase/alpine:3.19
+FROM lsiobase/alpine:3.23
 
 ENV \
     PATH="/pyvenv/bin:${PATH}"
