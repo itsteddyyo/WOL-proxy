@@ -2,6 +2,8 @@
 import os
 import re
 import ssl
+import json
+import ipaddress
 import paho.mqtt.client as mqtt
 from wakeonlan import send_magic_packet
 
@@ -13,7 +15,6 @@ MQTT_USERNAME      = os.getenv('MQTT_USERNAME',"")
 MQTT_PASSWORD      = os.getenv('MQTT_PASSWORD',"")
 MQTT_TOPIC_PREFIX  = os.getenv('MQTT_TOPIC_PREFIX',"WOL-proxy")
 MQTT_QOS           = int(os.getenv('MQTT_QOS',1))
-WOL_BROADCAST_ADDR = os.getenv('WOL_BROADCAST_ADDR',"255.255.255.255")
 #print("All env vars read.")
 
 # The callback for when the client receives a CONNACK response from the server.
@@ -35,13 +36,25 @@ def on_disconnect(client, userdata, rc, properties):
 
 # callback for when the client receives a message on the subscribed topic
 def on_message(client, userdata, message):
-    message.payload = message.payload.decode()
-    print(f"Message received with payload {message.payload}")
-    if re.match(r"[0-9a-f]{2}([-:\.]?)[0-9a-f]{2}(\1[0-9a-f]{2}){4}$", message.payload.lower()):
-        send_magic_packet(message.payload,ip_address=WOL_BROADCAST_ADDR)
-        print(f"Magic packet sent to {message.payload}.")
-    else:
-        print(f"Message payload has invalid mac address format!")
+    try:
+        payload_text = message.payload.decode()
+        print(f"Message received with payload {payload_text}")
+        payload = json.loads(payload_text)
+        mac_address = payload["mac_address"]
+        broadcast_address = payload["broadcast_address"]
+        if not isinstance(mac_address, str) or not re.fullmatch(
+            r"[0-9a-f]{2}([-:\.]?)[0-9a-f]{2}(\1[0-9a-f]{2}){4}", mac_address.lower()
+        ):
+            raise ValueError("invalid MAC address")
+        if not isinstance(broadcast_address, str):
+            raise ValueError("invalid broadcast address")
+        broadcast_address = ipaddress.IPv4Address(broadcast_address)
+    except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+        print("Message payload must contain a valid mac_address and IPv4 broadcast_address.")
+        return
+
+    send_magic_packet(mac_address, ip_address=str(broadcast_address))
+    print(f"Magic packet sent to {mac_address} via {broadcast_address}.")
 
 # set up mqtt client
 client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=MQTT_CLIENT_ID)

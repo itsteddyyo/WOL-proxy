@@ -10,7 +10,13 @@ The script can be run using docker (takes care of all dependencies) or standalon
 
 2. Run the container or script using instructions below.
 
-3. Publish to the mqtt topic, `WOL-proxy/command`, with the MAC address of the computer you wish to wake. The following formats are acceptable: `ab-cd-ef-01-23-45`, `ab:cd:ef:01:23:45`, `ab.cd.ef.01.23.45`, `abcdef012345`. An [example Home Assistant config](/hass-config-example.yaml) is provided.
+3. Publish a JSON payload to the mqtt topic, `WOL-proxy/command`, with the MAC address of the computer you wish to wake and the broadcast address for its network. The following MAC formats are acceptable: `ab-cd-ef-01-23-45`, `ab:cd:ef:01:23:45`, `ab.cd.ef.01.23.45`, `abcdef012345`.
+
+   ```json
+   {"mac_address":"ab-cd-ef-01-23-45","broadcast_address":"192.168.1.255"}
+   ```
+
+   An [example Home Assistant config](/hass-config-example.yaml) is provided.
 
    By default, WOL-proxy accepts messages on the `WOL-proxy/command` mqtt topic. The `WOL-proxy` prefix can be changed by setting the `MQTT_TOPIC_PREFIX` environment variable. WOL-proxy will then listen for messages on `[MQTT_TOPIC_PREFIX]/command`. Note that adding a trailing `/` to `MQTT_TOPIC_PREFIX` will create an empty level.
 
@@ -41,7 +47,7 @@ docker run -d --net=host --name=WOL-proxy seanauff/wol-proxy:[tag]
 Start the container with modified environment variables:
 
 ```shell
-docker run -d --net=host --name=WOL-proxy -e MQTT_BROKER_HOST=[host] -e WOL_BROADCAST_ADDR=[broadcast] seanauff/wol-proxy:[tag]
+docker run -d --net=host --name=WOL-proxy -e MQTT_BROKER_HOST=[host] seanauff/wol-proxy:[tag]
 ```
 
 *Note:* Container needs to run with host networking in order to send the broadcast packets correctly!
@@ -57,7 +63,6 @@ docker run -d --net=host --name=WOL-proxy -e MQTT_BROKER_HOST=[host] -e WOL_BROA
 | MQTT_PASSWORD     |               |Password for connecting to MQTT broker when using auth. TLS not currently supported       |
 | MQTT_TOPIC_PREFIX | WOL-proxy   |The first level(s) of the topic for the proxy to subscribe ([prefix]/command) and provide status ([prefix]/status)      |
 | MQTT_QOS          | 1             |[QOS](https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels/) level to use to subscribe to command topic       |
-| WOL_BROADCAST_ADDR| 255.255.255.255         |Change to the local broadcast IP for best results    |
 
 ### Build the image yourself
 
